@@ -30,6 +30,8 @@ class HuntingZone(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        print("hunting_zone_no_cache wyłączone")
+        return ############################################## WYŁĄCZNIK ####################################################
         if self.bot.db is None:
             self.bot.db = await asyncpg.create_pool(**POSTGRES)
 

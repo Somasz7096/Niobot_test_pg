@@ -38,8 +38,8 @@ class Tools(commands.Cog):
         await self.clear_channels()
 
     async def clear_channels(self):
-        for channel_name in ["⏰tod-report"]:
-        #for channel_name in ["🏹hunting-zone", "⏰tod-report"]:
+        #for channel_name in ["⏰tod-report"]:
+        for channel_name in ["🏹hunting-zone", "⏰tod-report"]:
             channel = discord.utils.get(self.bot.get_all_channels(), name=channel_name)
             if channel:
                 async for message in channel.history(limit=100):
