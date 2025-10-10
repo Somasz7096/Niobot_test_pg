@@ -1,0 +1,23 @@
+name: Deploy to Server via SSH
+
+on:
+  push:
+    branches: [ main ]  # gałąź, po której pushu ma działać
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Upload files to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "."                  # katalog repo do wysłania
+        target: "/home/ubuntu/niobot_pg"
+        flags: "avz --delete" 
