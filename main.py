@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+import subprocess
+import sys
 from config import DISCORD_TOKEN
 
 
@@ -10,6 +12,16 @@ intents.message_content = True
 intents.members = True
 intents.reactions = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+def install_requirements():
+    requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+    if os.path.exists(requirements_file):
+        print("📦 Installing requirements...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_file])
+    else:
+        print("⚠️ No requirements.txt found")
+
+install_requirements()
 
 async def main():
     await load_cogs()  # ładowanie cogów
@@ -36,13 +48,22 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
     logging.error(f"[ERROR] Slash Error: {error}")
 
 async def load_cogs():
-    for filename in os.listdir("./niobot_pg/cogs"):
-        if filename.endswith(".py"):
-            try:
-                await bot.load_extension(f"cogs.{filename[:-3]}")
-                print(f"[BOOT] 📦 Załadowano cog: {filename}")
-            except Exception as e:
-                print(f"[ERROR] Nie można załadować {filename}: {e}")
+    try:
+        for filename in os.listdir("./niobot_pg/cogs"):
+            if filename.endswith(".py"):
+                try:
+                    await bot.load_extension(f"cogs.{filename[:-3]}")
+                    print(f"[BOOT] 📦 Załadowano cog: {filename}")
+                except Exception as e:
+                    print(f"[ERROR] Nie można załadować {filename}: {e}")
+    except:
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                try:
+                    await bot.load_extension(f"cogs.{filename[:-3]}")
+                    print(f"[BOOT] 📦 Załadowano cog: {filename}")
+                except Exception as e:
+                    print(f"[ERROR] Nie można załadować {filename}: {e}")
 
 asyncio.run(main())
 
