@@ -36,7 +36,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
     logging.error(f"[ERROR] Slash Error: {error}")
 
 async def load_cogs():
-    for filename in os.listdir("./cogs"):
+    for filename in os.listdir("./niobot_pg/cogs"):
         if filename.endswith(".py"):
             try:
                 await bot.load_extension(f"cogs.{filename[:-3]}")
