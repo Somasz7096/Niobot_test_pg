@@ -12,7 +12,7 @@ POSTGRES = {
     "user": "postgres",
     "password": "haslo",
     "database": "niobot",
-    "host": "141.144.246.135",
+    "host": "localhost",
     "port": "5432"
 }
 
