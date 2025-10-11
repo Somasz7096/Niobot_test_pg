@@ -39,6 +39,7 @@ class TodReport(commands.Cog):
         await asyncio.sleep(3)
         ######### DISABLER ############
         await channel.send("cog disabled")
+        print("tod report cog disabled")
         return
 		######### DISABLER #############
 
