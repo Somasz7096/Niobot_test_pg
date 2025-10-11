@@ -9,7 +9,7 @@ GLOBAL_BLACKLIST_TIME = 90
 
 
 POSTGRES = {
-    "user": "postgres",
+    "user": "myuser",
     "password": "haslo",
     "database": "niobot",
     "host": "141.144.246.135",
