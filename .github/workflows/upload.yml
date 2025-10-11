@@ -2,7 +2,7 @@ name: Deploy to Server via SSH
 
 on:
   push:
-    branches: [ main ]  # gałąź, po której pushu ma działać
+    branches: [ main ]  # gałąź, po której pushu ma działać
 
 jobs:
   deploy:
@@ -18,8 +18,19 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "."                  # katalog repo do wysłania
+        source: "."                     # katalog repo do wysłania
         target: "/home/ubuntu/niobot_pg"
-        flags: "avz --delete"
+        overwrite: true
+        rm: true                        # usuń stare pliki, jak --delete w rsync
+
+    - name: Restart service on server
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-            sudo systemctl restart niobot_pg
+          cd /home/ubuntu/niobot_pg
+          /usr/bin/pip3 install -r requirements.txt
+          sudo systemctl restart niobot_pg
+          sudo systemctl status niobot_pg --no-pager
