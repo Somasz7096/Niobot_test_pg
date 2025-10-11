@@ -36,11 +36,11 @@ class TodReport(commands.Cog):
                     channel = ch
 
                     break
+        await asyncio.sleep(3)
         ######### DISABLER ############
         await channel.send("cog disabled")
         return
 		######### DISABLER #############
-        await asyncio.sleep(3)
 
         await self.tod_report_embed()
 
