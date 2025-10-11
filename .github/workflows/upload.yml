@@ -20,4 +20,6 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "."                  # katalog repo do wysłania
         target: "/home/ubuntu/niobot_pg"
-        flags: "avz --delete" 
+        flags: "avz --delete"
+        script: |
+            sudo systemctl restart niobot_pg
