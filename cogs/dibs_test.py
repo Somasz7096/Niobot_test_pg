@@ -27,6 +27,8 @@ class Spots(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        #print("dibs_test disabled")
+        #return ############################################## WYŁĄCZNIK ####################################################
         if self.bot.db is None:
             self.bot.db = await asyncpg.create_pool(**POSTGRES)
 
@@ -37,7 +39,8 @@ class Spots(commands.Cog):
                     self.channel = ch
                     print(f"[BOOT] HuntingZone channel: {self.channel.name}")
                     break
-        await self.channel.send("✅ cog active")
+        await self.channel.send("✅ dibs test cog active")
+        await self.load_spots()
         await self.hunting_zone_embed()
         view = await ButtonsView.add_buttons(self)
         await self.channel.send(view=view)
@@ -45,6 +48,8 @@ class Spots(commands.Cog):
     async def load_spots(self):
         async with self.bot.db.acquire() as conn:
             self.spots = await conn.fetch("SELECT * FROM spots")
+            #print(f"{self.spots=}")
+
 
     async def hunting_zone_embed(self):
         print("embed refresh")
@@ -109,14 +114,10 @@ class DibsView(discord.ui.View):
         if self.spot not in self.cog.active_dibs:
             print("new dibs")
             msg = await self.channel.send(f"{self.spot} dibs")
-            print(msg)
-            print(f"1st {self.cog.active_dibs}")
-            self.cog.active_dibs = msg
-            print(f"2nd {self.cog.active_dibs}")
+            self.cog.active_dibs.append(self.spot)
+            print(f"2nd {self.cog.active_dibs=}")
         else:
-            print(f"3nd {self.cog.active_dibs}")
             print("update dibs")
-
         print(f"{self.spot}, {self.user_name}, {self.cp_name}")
 
 
@@ -127,8 +128,6 @@ class ButtonsView(discord.ui.View):
         self.bot = cog.bot
         self.channel = cog.channel
         self.cp_name = None
-
-
     @classmethod
     async def add_buttons(cls, cog):
         try:

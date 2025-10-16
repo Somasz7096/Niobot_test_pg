@@ -30,8 +30,8 @@ class HuntingZone(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        #print("hunting_zone_no_cache disabled")
-        #return ############################################## WYŁĄCZNIK ####################################################
+        print("hunting_zone_no_cache disabled")
+        return ############################################## WYŁĄCZNIK ####################################################
         if self.bot.db is None:
             self.bot.db = await asyncpg.create_pool(**POSTGRES)
 
@@ -42,7 +42,8 @@ class HuntingZone(commands.Cog):
                     self.channel = ch
                     print(f"[BOOT] HuntingZone channel: {self.channel.name}")
                     break
-
+        await asyncio.sleep(3)
+        await self.channel.send("✅ hz no cache cog active")
         await self.hunting_zone_embed()
         view = await ButtonsView.add_buttons(self)
         await self.channel.send(view=view)

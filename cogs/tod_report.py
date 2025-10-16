@@ -34,15 +34,14 @@ class TodReport(commands.Cog):
                 ch = discord.utils.get(guild.text_channels, name="⏰tod-report")
                 if ch:
                     channel = ch
-
                     break
-
+        await asyncio.sleep(3)
         ######### DISABLER ############
         await channel.send("❌ cog disabled")
         print("tod report cog disabled")
         return
         ######### DISABLER #############
-        await asyncio.sleep(3)
+
         await self.tod_report_embed()
         await self.start()
 
