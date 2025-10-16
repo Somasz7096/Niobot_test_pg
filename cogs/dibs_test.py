@@ -11,8 +11,10 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 active_dibs = []
 
+
 class Spots(commands.Cog):
     def __init__(self, bot):
+        self.now = int(time.time())
         self.bot = bot
         self.bot.db = None
         self.channel = None
@@ -23,12 +25,11 @@ class Spots(commands.Cog):
         self.farm_time = FARM_TIME
         self.blacklist_time = BLACKLIST_TIME
         self.global_blacklist_time = GLOBAL_BLACKLIST_TIME
-        self.active_dibs = []
 
     @commands.Cog.listener()
     async def on_ready(self):
-        #print("dibs_test disabled")
-        #return ############################################## WYŁĄCZNIK xd ####################################################
+        # print("dibs_test disabled")
+        # return ############################################## WYŁĄCZNIK ####################################################
         if self.bot.db is None:
             self.bot.db = await asyncpg.create_pool(**POSTGRES)
 
@@ -40,16 +41,26 @@ class Spots(commands.Cog):
                     print(f"[BOOT] HuntingZone channel: {self.channel.name}")
                     break
         await self.channel.send("✅ dibs test cog active")
-        await self.load_spots()
+        await self.rebuild_dibs()
         await self.hunting_zone_embed()
         view = await ButtonsView.add_buttons(self)
         await self.channel.send(view=view)
 
-    async def load_spots(self):
-        async with self.bot.db.acquire() as conn:
-            self.spots = await conn.fetch("SELECT * FROM spots")
-            #print(f"{self.spots=}")
-
+    async def rebuild_dibs(self):
+        try:
+            async with self.bot.db.acquire() as conn:
+                await conn.execute("DELETE FROM dibs WHERE farm_end < $1", self.now)
+                await conn.execute(
+                    """INSERT INTO dibs (spot_name, emoji, is_permanent)
+                       SELECT s.spot_name, s.emoji, s.is_permanent
+                       FROM spots s
+                       WHERE NOT EXISTS (
+                           SELECT 1 FROM dibs d WHERE d.spot_name = s.spot_name
+                       );"""
+                )
+            print("[BOOT] dibs rebuilt")
+        except Exception as e:
+            print(f"dibs not rebuilt {e}")
 
     async def hunting_zone_embed(self):
         print("embed refresh")
@@ -91,17 +102,23 @@ class Spots(commands.Cog):
             else:
                 self.hunting_embed_msg = await self.channel.send(embed=embed_window)
 
+
 class DibsView(discord.ui.View):
     def __init__(self, cog, spot, emoji, interaction):
         super().__init__(timeout=None)
+        self.now = int(time.time())
         self.cog = cog
         self.bot = cog.bot
         self.channel = cog.channel
         self.spot = spot
+        self.emoji = emoji
+        self.interaction = interaction
         self.user = interaction.user
         self.user_name = interaction.user.display_name
         self.cp_name = self._get_cp_from_role()
-
+        self.priority = None
+        self.status = None
+        self.dibs_end = None
 
     def _get_cp_from_role(self):
         for role in self.user.roles:
@@ -110,15 +127,131 @@ class DibsView(discord.ui.View):
         print(f"[ERROR] {self.user_name} have no cp name selected")
         return None
 
+    async def _get_priority(self):
+        async with self.bot.db.acquire() as conn:
+            self.priority = await conn.fetchval(
+                "SELECT priority FROM cp_list WHERE cp_name = $1", self.cp_name
+            )
+
+    async def _get_status(self):
+        async with self.bot.db.acquire() as conn:
+            dibs_status = await conn.fetchrow(
+                "SELECT * FROM dibs WHERE spot_name = $1", self.spot
+            )
+            self.status = dibs_status["status"]
+            self.dibs_end_time = dibs_status["dibs_end"]
+
+    async def _send_dib_embed(self):
+        embed = discord.Embed(
+            title=f"🎯 Dibs in progress for `{self.emoji} {self.spot}`",
+            description=f"⏳ Results in <t:{self.dibs_end}:R>",
+            color=discord.Color.green(),
+        )
+        name = self.cp_name
+        value = f"Priority: {self.priority}\nby: {self.user_name}"
+        embed.add_field(name=name, value=value, inline=True)
+        msg = await self.channel.send(embed=embed)
+        return msg.id
+
+    async def _edit_dib_embed(self):
+        async with self.bot.db.acquire() as conn:
+            msg_id = await conn.fetchval(
+                "SELECT message_id FROM dibs WHERE spot_name = $1", self.spot
+            )
+            msg = await self.channel.fetch_message(msg_id)
+            name = self.cp_name
+            value = f"Priority: {self.priority}\nby: {self.user_name}"
+            embed = msg.embeds[0]
+            # Sprawdzenie, czy pole już istnieje
+            if any(field.name == name for field in embed.fields):
+                print(f"{self.cp_name} already dibs for {self.spot}")
+                await self.interaction.followup.send(f"❌ {self.cp_name} already dibs for `{self.emoji} {self.spot}`", ephemeral=True)
+                return
+            embed.add_field(name=name, value=value, inline=True)
+            await msg.edit(embed=embed)
+
+    async def _db_followup_dibs(self):
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO dibs (spot_name, status, cp_name, priority)
+                VALUES ($1, $2, $3, $4)
+                """,
+                self.spot,
+                "dibs",
+                self.cp_name,
+                self.priority
+            )
+            print(f"{self.cp_name} added to {self.spot} dibs")
+
+    async def _db_new_dibs(self, msg_id):
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(
+                """UPDATE dibs SET status = $1, cp_name = $2, priority = $3, message_id = $4, dibs_start = $5, dibs_end = $6 WHERE spot_name = $7""",
+                "dibs",
+                self.cp_name,
+                self.priority,
+                msg_id,
+                self.now,
+                self.dibs_end,
+                self.spot,
+            )
+            print(f"{self.spot} status updated to dibs")
+
+    async def _wait_and_finalize_dibs(self, msg_id):
+        await asyncio.sleep(DIBS_TIME)
+        async with self.bot.db.acquire() as conn:
+            winner_cp = await conn.fetchval("SELECT cp_name FROM dibs WHERE spot_name = $1 ORDER BY priority ASC LIMIT 1", self.spot)
+            print(f"{winner_cp=}")
+        msg = await self.channel.fetch_message(msg_id)
+        win_embed = discord.Embed(
+            title=f"🎯 Dibs finished for `{self.emoji} {self.spot}`",
+            description=f"🏆 Winer is **{winner_cp}**",
+            color=discord.Color.gold(),
+        )
+        if msg.embeds:
+            embed = msg.embeds[0]
+            for field in embed.fields:
+                win_embed.add_field(name=field.name, value=field.value, inline=True)
+        winner_msg = await msg.edit(embed=win_embed)
+        asyncio.create_task(Tools.delete_later(self, winner_msg, 20))
+        async with self.bot.db.acquire() as conn:
+            farm_end = int(time.time()) + FARM_TIME
+            await conn.execute("UPDATE dibs SET status = $1, cp_name = $2, farm_end = $3 WHERE spot_name = $4", "taken", winner_cp, farm_end, self.spot)
+        await self.cog.hunting_zone_embed()
+        await self._set_spot_free()
+
+    async def _set_spot_free(self):
+        await asyncio.sleep(FARM_TIME)
+        async with self.bot.db.acquire() as conn:
+            await conn.execute("DELETE FROM dibs WHERE spot_name = $1", self.spot)
+            await self.cog.rebuild_dibs()
+            await self.cog.hunting_zone_embed()
+            print(f"{self.spot} is free.")
+
     async def dibs_start(self):
-        if self.spot not in self.cog.active_dibs:
+        await self._get_priority()
+        await self._get_status()
+        if self.status == "free":
             print("new dibs")
-            msg = await self.channel.send(f"{self.spot} dibs")
-            self.cog.active_dibs.append(self.spot)
-            print(f"2nd {self.cog.active_dibs=}")
-        else:
+            self.dibs_end = self.now + DIBS_TIME
+            msg_id = await self._send_dib_embed()
+            print(msg_id)
+            await self._db_new_dibs(msg_id)
+            await self.cog.hunting_zone_embed()
+            await self._wait_and_finalize_dibs(msg_id)
+
+        elif self.status == "dibs":
             print("update dibs")
-        print(f"{self.spot}, {self.user_name}, {self.cp_name}")
+            await self._db_followup_dibs()
+            await self._edit_dib_embed()
+
+        elif self.status == "taken":
+            await self.interaction.followup.send(f"❌ `{self.emoji} {self.spot}` is already taken.", ephemeral=True)
+
+        print(
+            f"{self.spot}[{self.status}], {self.user_name} - {self.cp_name}[{self.priority}]"
+        )
 
 
 class ButtonsView(discord.ui.View):
@@ -128,6 +261,7 @@ class ButtonsView(discord.ui.View):
         self.bot = cog.bot
         self.channel = cog.channel
         self.cp_name = None
+
     @classmethod
     async def add_buttons(cls, cog):
         try:
@@ -172,7 +306,7 @@ class ButtonsView(discord.ui.View):
     @discord.ui.button(label="message cache", style=discord.ButtonStyle.green, row=4)
     async def view_message_cache(self, interaction, button):
         await interaction.response.defer()
-        print (self.bot.message_cache)
+        print(self.bot.message_cache)
 
     @discord.ui.button(label="toggle roles", style=discord.ButtonStyle.green, row=4)
     async def toggle_role(
@@ -248,7 +382,6 @@ class ButtonsView(discord.ui.View):
 
         except Exception as e:
             print(e)
-
 
 
 # ===== SETUP FUNKCJA =====

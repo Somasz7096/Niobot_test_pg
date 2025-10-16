@@ -78,8 +78,8 @@ class DatabaseCog(commands.Cog):
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS cp_list (
-                    cp_name TEXT UNIQUE NOT NULL,
-                    priority INTEGER UNIQUE NOT NULL
+                    cp_name TEXT UNIQUE,
+                    priority INTEGER UNIQUE
                 );
             """
             )
