@@ -28,7 +28,7 @@ class Spots(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         #print("dibs_test disabled")
-        #return ############################################## WYŁĄCZNIK ####################################################
+        #return ############################################## WYŁĄCZNIK xd ####################################################
         if self.bot.db is None:
             self.bot.db = await asyncpg.create_pool(**POSTGRES)
 
