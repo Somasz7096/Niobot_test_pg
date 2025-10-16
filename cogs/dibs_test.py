@@ -37,7 +37,7 @@ class Spots(commands.Cog):
                     self.channel = ch
                     print(f"[BOOT] HuntingZone channel: {self.channel.name}")
                     break
-
+        await self.channel.send("✅ cog active")
         await self.hunting_zone_embed()
         view = await ButtonsView.add_buttons(self)
         await self.channel.send(view=view)

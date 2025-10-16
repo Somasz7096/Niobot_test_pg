@@ -13,15 +13,7 @@ intents.members = True
 intents.reactions = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-def install_requirements():
-    requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
-    if os.path.exists(requirements_file):
-        print("📦 Installing requirements...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_file])
-    else:
-        print("⚠️ No requirements.txt found")
 
-install_requirements()
 
 async def main():
     await load_cogs()  # ładowanie cogów
