@@ -23,7 +23,7 @@ venv/
 Thumbs.db
 
 # === Plik z sekretami ===
-secrets.py
+mysecrets.py
 
 # === Pliki bazy danych lokalnej ===
 *.sqlite3
