@@ -9,7 +9,7 @@ from config import POSTGRES, DIBS_TIME, FARM_TIME, BLACKLIST_TIME, GLOBAL_BLACKL
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
-active_dibs = []
+active_dibs = {}
 
 
 class Spots(commands.Cog):
