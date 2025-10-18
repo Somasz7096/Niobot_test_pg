@@ -1,4 +1,4 @@
-from config import POSTGRES
+from secrets import POSTGRES
 from discord.ext import commands
 import asyncpg
 
