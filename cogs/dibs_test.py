@@ -30,8 +30,8 @@ class Spots(commands.Cog):
     async def on_ready(self):
         # print("dibs_test disabled")
         # return ############################################## WYŁĄCZNIK ####################################################
-        if self.bot.db is None:
-            self.bot.db = await asyncpg.create_pool(**POSTGRES)
+        """if self.bot.db is None:
+            self.bot.db = await asyncpg.create_pool(**POSTGRES)"""
 
         if self.channel is None:
             for guild in self.bot.guilds:
