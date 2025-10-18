@@ -5,8 +5,8 @@ import time
 import asyncpg
 from cogs.tools import Tools
 from data.data_hunting_zone import letter_emojis, excluded_roles
-from config import POSTGRES, DIBS_TIME, FARM_TIME, BLACKLIST_TIME, GLOBAL_BLACKLIST_TIME
-
+from config import DIBS_TIME, FARM_TIME, BLACKLIST_TIME, GLOBAL_BLACKLIST_TIME
+from secrets import POSTGRES
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 active_dibs = []
