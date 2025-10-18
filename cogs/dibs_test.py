@@ -5,8 +5,8 @@ import time
 import asyncpg
 from cogs.tools import Tools
 from data.data_hunting_zone import letter_emojis, excluded_roles
-from config import POSTGRES, DIBS_TIME, FARM_TIME, BLACKLIST_TIME, GLOBAL_BLACKLIST_TIME
-
+from config import DIBS_TIME, FARM_TIME, BLACKLIST_TIME, GLOBAL_BLACKLIST_TIME
+from mysecrets import POSTGRES
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 active_dibs = {}
@@ -29,9 +29,9 @@ class Spots(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         # print("dibs_test disabled")
-        # return ############################################## WYŁĄCZNIK ####################################################
-        if self.bot.db is None:
-            self.bot.db = await asyncpg.create_pool(**POSTGRES)
+        # return ############################################## WYŁĄCZNIK ###################################################
+        """if self.bot.db is None:
+            self.bot.db = await asyncpg.create_pool(**POSTGRES)"""
 
         if self.channel is None:
             for guild in self.bot.guilds:
