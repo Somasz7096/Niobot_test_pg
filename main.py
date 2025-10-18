@@ -4,7 +4,7 @@ import asyncio
 import os
 import subprocess
 import sys
-from config import DISCORD_TOKEN
+from secrets import DISCORD_TOKEN
 
 
 intents = discord.Intents.default()
