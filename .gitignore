@@ -1,0 +1,29 @@
+# === Python cache ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Virtual environment ===
+venv/
+.env/
+.env
+
+# === IDE / Edytory ===
+.vscode/
+.idea/
+*.code-workspace
+
+# === Logi i tymczasowe ===
+*.log
+*.tmp
+*.bak
+
+# === Systemowe ===
+.DS_Store
+Thumbs.db
+
+# === Plik z sekretami ===
+secrets.py
+
+# === Pliki bazy danych lokalnej ===
+*.sqlite3
