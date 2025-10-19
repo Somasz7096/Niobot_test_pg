@@ -30,4 +30,4 @@ secrets.py
 *.sqlite3
 
 upload.yml
-.git
+.git/
