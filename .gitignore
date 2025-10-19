@@ -24,6 +24,10 @@ Thumbs.db
 
 # === Plik z sekretami ===
 mysecrets.py
+secrets.py
 
 # === Pliki bazy danych lokalnej ===
 *.sqlite3
+
+upload.yml
+.git/
