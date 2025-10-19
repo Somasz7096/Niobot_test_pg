@@ -20,7 +20,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "."                     # katalog repo do wysłania
         target: "/home/ubuntu/niobot_pg"
-        overwrite: true                        # usuń stare pliki, jak --delete w rsy
+        overwrite: true                        # 
+        rm: false #usuń stare pliki, jak --delete w rsy
     - name: Restart service on server
       uses: appleboy/ssh-action@v1.1.0
       with:
