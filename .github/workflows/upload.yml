@@ -22,7 +22,7 @@ jobs:
         target: "/home/ubuntu/niobot_pg"
         overwrite: true
         rm: true                        # usuń stare pliki, jak --delete w rsync
-        tar_tmp_patch: ""
+        tar_tmp_path: ""
     - name: Restart service on server
       uses: appleboy/ssh-action@v1.1.0
       with:
