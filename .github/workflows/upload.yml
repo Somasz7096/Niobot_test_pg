@@ -19,7 +19,6 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "."                     # katalog repo do wysłania
-        tar: false
         target: "/home/ubuntu/niobot_pg"
         overwrite: true
         rm: true                        # usuń stare pliki, jak --delete w rsync
