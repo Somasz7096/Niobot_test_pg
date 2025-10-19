@@ -29,4 +29,5 @@ secrets.py
 # === Pliki bazy danych lokalnej ===
 *.sqlite3
 
-upload.yml 
+upload.yml
+.git
