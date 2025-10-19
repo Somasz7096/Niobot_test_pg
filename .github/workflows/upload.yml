@@ -42,5 +42,29 @@ jobs:
             --exclude-from='.gitignore' \
             -e "ssh -i ~/.ssh/id_rsa -p $SSH_PORT -o StrictHostKeyChecking=yes" \
             $SRC ${SSH_USER}@${SSH_HOST}:$DEST
+  restart:
+    name: Restart niobot_pg service
+    runs-on: ubuntu-latest
+    needs: upload  # ⬅️ ten job uruchomi się dopiero po zakończeniu uploadu
+
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Restart niobot_pg on server
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+        run: |
+          ssh -i ~/.ssh/id_rsa -p $SSH_PORT -o StrictHostKeyChecking=yes ${SSH_USER}@${SSH_HOST} \
+            "sudo systemctl restart niobot_pg && sudo systemctl status niobot_pg --no-pager"
 
 
