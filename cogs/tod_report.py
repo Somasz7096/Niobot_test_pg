@@ -24,9 +24,9 @@ class TodReport(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        """global db
+        global db
         if db is None:
-            db = await asyncpg.create_pool(**POSTGRES)"""
+            db = await asyncpg.create_pool(**POSTGRES)
 
         global channel
         if channel is None:

@@ -1,36 +1,37 @@
-name: Deploy to Server via SSH
+name: Upload files to server
 
 on:
   push:
-    branches: [ main ]  # gałąź, po której pushu ma działać
+    branches:
+      - main
 
 jobs:
-  deploy:
+  upload:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Upload files to server
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "."                     # katalog repo do wysłania
-        target: "/home/ubuntu/niobot_pg"
-        overwrite: true
-        rm: true                        # usuń stare pliki, jak --delete w rsync
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Restart service on server
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /home/ubuntu/niobot_pg
-          /usr/bin/pip3 install -r requirements.txt
-          sudo systemctl restart niobot_pg
-          sudo systemctl status niobot_pg --no-pager
+      - name: Upload files via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: |
+            ./*
+            !.git/
+            !.gitignore
+            !README.md
+            !LICENSE
+            !.github/
+            !docs/
+            !tests/
+          target: "/home/ubuntu/niobot_pg"
+          overwrite: true
+
