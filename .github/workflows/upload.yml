@@ -19,8 +19,8 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: |
-          ./niobot_pg/*
-          !./niobot_pg/.git/
+          .*
+          !.git/
         target: "/home/ubuntu/niobot_pg"
         overwrite: true                        
         rm: false #usuń stare pliki, jak --delete w rsy
