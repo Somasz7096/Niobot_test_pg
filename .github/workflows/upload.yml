@@ -1,51 +1,37 @@
-name: Deploy via rsync over SSH
+name: Upload files to server
 
 on:
-    push:
-      branches:
-        - main
+  push:
+    branches:
+      - main
 
 jobs:
-    deploy:
+  upload:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.5.3
         with:
-          fetch-depth: 0
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install rsync and ssh
-        run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
+      - name: Upload files via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: |
+            ./*
+            !.git/
+            !.gitignore
+            !README.md
+            !LICENSE
+            !.github/
+            !docs/
+            !tests/
+          target: "/home/ubuntu/niobot_pg"
+          overwrite: true
 
-      - name: Setup SSH key
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          # opcjonalnie dodaj known_hosts entry, np. github.com lub twój host:
-          # ssh-keyscan -H your.server.com >> ~/.ssh/known_hosts
-          # Jeżeli chcesz dodać host dynamicznie:
-          if [ -n "${{ secrets.SSH_HOST }}" ]; then
-            ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
-          fi
-
-      - name: Rsync to remote server (no delete, respect .gitignore)
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT }} # opcjonalnie
-        run: |
-          # target katalog na serwerze
-          TARGET="/home/ubuntu/niobot_pg"    # <- dostosuj
-          # lokalny folder do wysyłki (root repo)
-          SRC="./"
-
-          # Jeżeli chcesz, by rsync czytał .gitignore, użyj --exclude-from
-          # Dodatkowo zawsze wykluczamy katalog .git
-          rsync -avz --progress \
-            --exclude='.git' \
-            --exclude-from='.gitignore' \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes -p ${SSH_PORT:-22}" \
-            $SRC ${SSH_USER}@${SSH_HOST}:$TARGET
